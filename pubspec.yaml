@@ -81,6 +81,7 @@ flutter:
     - assets/lottie/splash.json
     - assets/lottie/login_decor.json
     - assets/images/background.png
+    - assets/images/login_art.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

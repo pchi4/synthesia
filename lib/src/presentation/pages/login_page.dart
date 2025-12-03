@@ -1,120 +1,211 @@
 // lib/src/presentation/pages/login_page.dart
 import 'dart:ui';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lottie/lottie.dart';
+
 import '../../services/auth_service.dart';
 import '../pages/home_page.dart';
 
+// Definindo a cor de fundo primária do seu app de música (um preto/cinza muito escuro)
+const Color _backgroundColor = Color(0xFF141414);
+
+// Custom Clipper para criar o corte diagonal na imagem superior
+class _DiagonalClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height * 0.82);
+    path.lineTo(size.width, size.height * 0.65);
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(_DiagonalClipper oldClipper) => false;
+}
+
 class LoginPage extends ConsumerWidget {
   const LoginPage({super.key});
+
+  // Widget auxiliar para os indicadores de página (dots), para manter o estilo visual
+  Widget _buildDot(bool isActive) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      margin: const EdgeInsets.symmetric(horizontal: 4.0),
+      height: 6,
+      width: isActive ? 24 : 6,
+      decoration: BoxDecoration(
+        color: isActive ? Colors.white : Colors.white.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(3),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final screen = MediaQuery.of(context).size;
 
     return Scaffold(
+      backgroundColor: _backgroundColor,
       body: Stack(
         children: [
-          // Background image (network or asset)
-          Positioned.fill(
-            child: CachedNetworkImage(
-              imageUrl:
-                  'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1080&q=80',
-              fit: BoxFit.cover,
-              placeholder: (c, u) => Container(color: Colors.grey[900]),
-              errorWidget: (c, u, e) => Image.asset(
-                'assets/images/background.jpg',
+          // 1. Container de Arte Superior com Corte Diagonal
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: screen.height * 0.6,
+            child: ClipPath(
+              clipper: _DiagonalClipper(),
+              child: Image.asset(
+                'assets/images/login_art.png',
                 fit: BoxFit.cover,
+                color: Colors.black.withOpacity(0.2),
+                colorBlendMode: BlendMode.darken,
               ),
             ),
           ),
 
-          // Blur overlay
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-              child: Container(color: Colors.black.withOpacity(0.35)),
-            ),
-          ),
-
-          // Center card
-          Center(
-            child: Container(
-              width: screen.width * 0.88,
-              constraints: const BoxConstraints(maxWidth: 520),
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
-              ),
+          // 2. Conteúdo Principal (Texto e Botões)
+          Positioned(
+            top: screen.height * 0.45,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Lottie small decor
-                  SizedBox(
-                    height: 120,
-                    child: Lottie.asset('assets/lottie/login_decor.json'),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Bem-vindo ao Synthesia',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  const Spacer(flex: 2),
+
+                  // Título Principal com a proposta do app
+                  const Text(
+                    'Sua Música, \nNossa AI',
+                    style: TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 38, // Um pouco menor para caber em 3 linhas
+                      fontWeight: FontWeight.w800,
+                      height: 1.15,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Conecte sua conta Spotify para começar',
-                    style: TextStyle(color: Colors.white.withOpacity(0.9)),
-                  ),
-                  const SizedBox(height: 18),
+                  const Spacer(flex: 1),
+
+                  // Botão Principal: Login com Spotify (Requisito MVP 3.1)
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () async {
+                        // Implementação do OAuth 2.0 PKCE do Spotify
                         try {
+                          // Assumindo que o authServiceProvider lida com o login via Spotify
                           await ref.read(authServiceProvider).login();
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(builder: (_) => const HomePage()),
                           );
                         } catch (e) {
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(SnackBar(content: Text('Erro: $e')));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Erro ao conectar com Spotify: $e'),
+                            ),
+                          );
                         }
                       },
-                      icon: const Icon(Icons.login),
+                      // Cor principal do Spotify para identificação
+                      icon: const Icon(Icons.music_note_outlined, size: 28),
                       label: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 14),
+                        padding: EdgeInsets.symmetric(vertical: 18),
                         child: Text(
                           'Conectar com Spotify',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1DB954),
-                        foregroundColor: Colors.black,
+                        backgroundColor: const Color(
+                          0xFF1DB954,
+                        ), // Cor Verde Spotify
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Botão Secundário: Continuar sem Conta (Para o 'Ver tour rápido')
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(
+                        context,
+                      ).pushReplacementNamed('/onboarding'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _backgroundColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: Colors.white.withOpacity(0.15),
+                            width: 1.5,
+                          ),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 18.0),
+                        child: Text(
+                          'Voltar para o Tour',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 10),
-                  TextButton(
-                    onPressed: () => Navigator.of(
-                      context,
-                    ).pushReplacementNamed('/onboarding'),
-                    child: const Text(
-                      'Ver tour rápido',
-                      style: TextStyle(color: Colors.white70),
+                  const SizedBox(height: 32),
+
+                  // Texto de Termos e Privacidade (Requisito Legal 8)
+                  Center(
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.6),
+                          fontSize: 12,
+                        ),
+                        children: [
+                          const TextSpan(
+                            text: 'Ao prosseguir, você concorda com os ',
+                          ),
+                          TextSpan(
+                            text: 'Termos de Serviço',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                          ),
+                          const TextSpan(text: ' e a '),
+                          TextSpan(
+                            text: 'Política de Privacidade',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                          ),
+                          const TextSpan(text: ' do Plano Completo.'),
+                        ],
+                      ),
                     ),
                   ),
+                  const Spacer(flex: 1),
                 ],
               ),
             ),
