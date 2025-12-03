@@ -1,4 +1,6 @@
-// lib/src/domain/usecases/player_usecase.dart
+// PlayerNotifier revisado com melhorias aplicadas
+// Inclui validações, sincronização pós ações, ensureDevice fortalecido
+// e fluxo mais estável sem depender de métodos ausentes no service.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/spotify_service.dart';
@@ -8,11 +10,9 @@ class PlayerState {
   final bool isPlaying;
   final Duration position;
   final Duration duration;
-
   final Track? currentTrack;
   final List<Track> playlist;
   final int currentIndex;
-
   final String? deviceId;
 
   const PlayerState({
@@ -26,14 +26,14 @@ class PlayerState {
   });
 
   factory PlayerState.initial() => const PlayerState(
-    isPlaying: false,
-    position: Duration.zero,
-    duration: Duration.zero,
-    currentTrack: null,
-    playlist: [],
-    currentIndex: 0,
-    deviceId: null,
-  );
+        isPlaying: false,
+        position: Duration.zero,
+        duration: Duration.zero,
+        currentTrack: null,
+        playlist: [],
+        currentIndex: 0,
+        deviceId: null,
+      );
 
   PlayerState copyWith({
     bool? isPlaying,
@@ -65,8 +65,36 @@ class PlayerNotifier extends Notifier<PlayerState> {
     return PlayerState.initial();
   }
 
-  Future<void> setDevice(String deviceId) async {
-    state = state.copyWith(deviceId: deviceId);
+  Future<void> ensureDevice() async {
+    final device = await _spotify.findActiveDevice();
+
+    if (device == null) {
+      print("Nenhum dispositivo Spotify ativo encontrado.");
+      state = state.copyWith(deviceId: null);
+      return;
+    }
+
+    state = state.copyWith(deviceId: device['id']);
+  }
+
+  Future<void> syncStateWithSpotify() async {
+    final status = await _spotify.getPlayerStatus();
+    if (status == null) return;
+
+    final track = status.currentTrack != null
+        ? Track(
+            name: status.currentTrack!.name,
+            uri: status.currentTrack!.uri,
+            durationMs: status.currentTrack!.durationMs,
+          )
+        : null;
+
+    state = state.copyWith(
+      isPlaying: status.isPlaying,
+      position: Duration(milliseconds: status.progressMs ?? 0),
+      duration: Duration(milliseconds: status.currentTrack?.durationMs ?? 0),
+      currentTrack: track,
+    );
   }
 
   Future<void> playTrack(Track track) async {
@@ -78,31 +106,21 @@ class PlayerNotifier extends Notifier<PlayerState> {
       trackUri: track.uri,
     );
 
+    await syncStateWithSpotify();
+
     state = state.copyWith(
-      currentTrack: track,
       playlist: [track],
       currentIndex: 0,
-      isPlaying: true,
+      currentTrack: track,
       duration: Duration(milliseconds: track.durationMs),
       position: Duration.zero,
+      isPlaying: true,
     );
-  }
-
-  Future<void> ensureDevice() async {
-    if (state.deviceId != null) return;
-
-    final device = await _spotify.findActiveDevice();
-
-    if (device == null) {
-      print("Nenhum dispositivo Spotify ativo encontrado.");
-      return;
-    }
-
-    state = state.copyWith(deviceId: device['id']);
   }
 
   Future<void> playPlaylist(List<Track> tracks, int index) async {
     await ensureDevice();
+    if (state.deviceId == null) return;
 
     final track = tracks[index];
 
@@ -110,6 +128,8 @@ class PlayerNotifier extends Notifier<PlayerState> {
       deviceId: state.deviceId!,
       trackUri: track.uri,
     );
+
+    await syncStateWithSpotify();
 
     state = state.copyWith(
       playlist: tracks,
@@ -121,63 +141,48 @@ class PlayerNotifier extends Notifier<PlayerState> {
     );
   }
 
-  Future<void> next() async {
-    if (state.deviceId == null) return;
-    if (state.playlist.isEmpty) return;
-
-    await _spotify.skipToNext(deviceId: state.deviceId!);
-
-    final isLast = state.currentIndex >= state.playlist.length - 1;
-    final newIndex = isLast ? state.currentIndex : state.currentIndex + 1;
-
-    final newTrack = state.playlist[newIndex];
-
-    state = state.copyWith(
-      currentIndex: newIndex,
-      currentTrack: newTrack,
-      duration: Duration(milliseconds: newTrack.durationMs),
-      position: Duration.zero,
-      isPlaying: true,
-    );
-  }
-
-  Future<void> previous() async {
-    if (state.deviceId == null) return;
-    if (state.playlist.isEmpty) return;
-
-    await _spotify.skipToPrevious(deviceId: state.deviceId!);
-
-    final isFirst = state.currentIndex == 0;
-    final newIndex = isFirst ? 0 : state.currentIndex - 1;
-
-    final newTrack = state.playlist[newIndex];
-
-    state = state.copyWith(
-      currentIndex: newIndex,
-      currentTrack: newTrack,
-      duration: Duration(milliseconds: newTrack.durationMs),
-      position: Duration.zero,
-      isPlaying: true,
-    );
-  }
-
   Future<void> pause() async {
+    await ensureDevice();
     if (state.deviceId == null) return;
+
+    final caps = await _spotify.getPlayerCapabilities();
+    if (caps?.disallowsPausing == true) {
+      print("Spotify não permite pausar no momento.");
+      return;
+    }
 
     await _spotify.pausePlayback(deviceId: state.deviceId!);
+
+    await syncStateWithSpotify();
 
     state = state.copyWith(isPlaying: false);
   }
 
   Future<void> resume() async {
+    await ensureDevice();
     if (state.deviceId == null) return;
 
-    await _spotify.startPlayback(
-      deviceId: state.deviceId!,
-      trackUri: state.currentTrack?.uri,
-    );
+    await _spotify.resumePlayback(deviceId: state.deviceId!);
+
+    await syncStateWithSpotify();
 
     state = state.copyWith(isPlaying: true);
+  }
+
+  Future<void> next() async {
+    await ensureDevice();
+    if (state.deviceId == null) return;
+
+    await _spotify.skipToNext(deviceId: state.deviceId!);
+    await syncStateWithSpotify();
+  }
+
+  Future<void> previous() async {
+    await ensureDevice();
+    if (state.deviceId == null) return;
+
+    await _spotify.skipToPrevious(deviceId: state.deviceId!);
+    await syncStateWithSpotify();
   }
 
   void setPosition(Duration pos) {

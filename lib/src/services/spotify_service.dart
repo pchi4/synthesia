@@ -3,20 +3,19 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synthesia/src/domain/entities/track.dart';
-import '../core/interceptors/token_interceptor.dart'; // Importa o Interceptor
+import '../core/interceptors/token_interceptor.dart';
 
 final spotifyServiceProvider = Provider<SpotifyService>((ref) {
   final dio = Dio(
     BaseOptions(
       baseUrl: 'https://api.spotify.com',
       contentType: 'application/json',
-      responseType: ResponseType.json, // <- ESSENCIAL
+      responseType: ResponseType.json,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
     ),
   );
 
-  // Adiciona o TokenInterceptor para injetar o Access Token automaticamente
   dio.interceptors.add(TokenInterceptor(ref));
 
   return SpotifyService(dio);
@@ -27,20 +26,15 @@ class SpotifyService {
 
   SpotifyService(this._dio);
 
-  // Método para buscar o perfil do usuário (API-002)
   Future<Map<String, dynamic>> fetchUserProfile() async {
     try {
       final response = await _dio.get('/v1/me');
       return response.data;
     } on DioException catch (e) {
-      // Se for 401 (Unauthorized), significa que o token expirou ou é inválido.
-      // O Interceptor deve cuidar disso futuramente.
       print('Erro ao buscar perfil do Spotify: ${e.response?.data}');
       rethrow;
     }
   }
-
-  // lib/src/services/spotify_service.dart
 
   Future<List<Map<String, dynamic>>> fetchUserPlaylists() async {
     try {
@@ -50,7 +44,6 @@ class SpotifyService {
       );
 
       final items = response.data['items'] as List<dynamic>?;
-
       return items?.cast<Map<String, dynamic>>() ?? [];
     } on DioException catch (e) {
       print('Erro ao buscar playlists do usuário: ${e.response?.data}');
@@ -69,10 +62,9 @@ class SpotifyService {
 
       final items = response.data['items'] as List<dynamic>? ?? [];
 
-      // Aqui está o parse correto
       final tracks = items
           .map((item) => item['track'])
-          .where((t) => t != null) // remove anúncios / podcasts / nulls
+          .where((t) => t != null)
           .map<Track>((trackJson) => Track.fromJson(trackJson))
           .toList();
 
@@ -83,8 +75,6 @@ class SpotifyService {
     }
   }
 
-  // lib/src/services/spotify_service.dart
-
   Future<Map<String, dynamic>?> findActiveDevice() async {
     try {
       final response = await _dio.get('/v1/me/player/devices');
@@ -92,11 +82,8 @@ class SpotifyService {
       final devices = (response.data['devices'] as List<dynamic>? ?? [])
           .cast<Map<String, dynamic>>();
 
-      if (devices.isEmpty) {
-        return null; // Nenhum dispositivo disponível
-      }
+      if (devices.isEmpty) return null;
 
-      // Prioriza o ativo
       final active = devices.firstWhere(
         (d) => d['is_active'] == true,
         orElse: () => devices.first,
@@ -111,9 +98,7 @@ class SpotifyService {
 
   Future<List<Map<String, dynamic>>> fetchAvailableDevices() async {
     try {
-      // Endpoint real: /v1/me/player/devices
       final response = await _dio.get('/v1/me/player/devices');
-
       final items = response.data['devices'] as List<dynamic>?;
       return items?.cast<Map<String, dynamic>>() ?? [];
     } on DioException {
@@ -121,20 +106,12 @@ class SpotifyService {
     }
   }
 
-  Future<void> startPlayback({
-    required String deviceId,
-    String? trackUri,
-  }) async {
+  Future<void> startPlayback({required String deviceId, String? trackUri}) async {
     try {
       await _dio.put(
         '/v1/me/player/play',
         queryParameters: {'device_id': deviceId},
-        data: trackUri != null
-            ? {
-                "uris": [trackUri],
-              }
-            : {},
-        options: Options(headers: {"Content-Type": "application/json"}),
+        data: trackUri != null ? {"uris": [trackUri]} : {},
       );
     } on DioException catch (e) {
       print("Erro ao iniciar playback: ${e.response?.data}");
@@ -144,11 +121,7 @@ class SpotifyService {
 
   Future<void> pausePlayback({required String deviceId}) async {
     try {
-      // Endpoint real: /v1/me/player/pause
-      await _dio.put(
-        '/v1/me/player/pause',
-        queryParameters: {'device_id': deviceId},
-      );
+      await _dio.put('/v1/me/player/pause', queryParameters: {'device_id': deviceId});
     } on DioException {
       rethrow;
     }
@@ -156,11 +129,7 @@ class SpotifyService {
 
   Future<void> skipToNext({required String deviceId}) async {
     try {
-      // Endpoint real: /v1/me/player/next
-      await _dio.post(
-        '/v1/me/player/next',
-        queryParameters: {'device_id': deviceId},
-      );
+      await _dio.post('/v1/me/player/next', queryParameters: {'device_id': deviceId});
     } on DioException {
       rethrow;
     }
@@ -168,15 +137,55 @@ class SpotifyService {
 
   Future<void> skipToPrevious({required String deviceId}) async {
     try {
-      // Endpoint real: /v1/me/player/previous
-      await _dio.post(
-        '/v1/me/player/previous',
-        queryParameters: {'device_id': deviceId},
-      );
+      await _dio.post('/v1/me/player/previous', queryParameters: {'device_id': deviceId});
     } on DioException {
       rethrow;
     }
   }
 
-  // TODO: Outros métodos da API serão adicionados aqui (ex: search, recommendations)
+  // Métodos adicionais
+
+  Future<void> resumePlayback({required String deviceId}) async {
+    try {
+      await _dio.put('/v1/me/player/play', queryParameters: {'device_id': deviceId});
+    } on DioException catch (e) {
+      print("Erro ao retomar reprodução: ${e.response?.data}");
+      rethrow;
+    }
+  }
+
+  Future<void> seek(int positionMs, {required String deviceId}) async {
+    try {
+      await _dio.put(
+        '/v1/me/player/seek',
+        queryParameters: {
+          'position_ms': positionMs,
+          'device_id': deviceId,
+        },
+      );
+    } on DioException catch (e) {
+      print("Erro ao mudar posição da faixa: ${e.response?.data}");
+      rethrow;
+    }
+  }
+
+  Future<dynamic> getPlayerStatus() async {
+    try {
+      final response = await _dio.get('/v1/me/player');
+      return response.data;
+    } on DioException catch (e) {
+      print('Erro ao obter status do player: ${e.response?.data}');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getPlayerCapabilities() async {
+    try {
+      final response = await _dio.get('/v1/me/player/capabilities');
+      return response.data;
+    } on DioException catch (e) {
+      print('Erro ao obter capabilities: ${e.response?.data}');
+      return null;
+    }
+  }
 }
