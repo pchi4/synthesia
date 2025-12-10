@@ -1,4 +1,3 @@
-// lib/src/presentation/pages/splash_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -20,7 +19,6 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _prepare() async {
-    // Simula carregamento e lê SharedPreferences para saber se já viu onboarding
     final prefs = await SharedPreferences.getInstance();
     final seen = prefs.getBool('seen_onboarding') ?? false;
     await Future.delayed(const Duration(milliseconds: 1400));

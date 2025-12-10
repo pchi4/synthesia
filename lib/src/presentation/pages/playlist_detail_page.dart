@@ -1,4 +1,3 @@
-// lib/src/presentation/pages/playlist_detail_page.dart
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -9,11 +8,10 @@ import '../../domain/entities/track.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/usecases/player_usecase.dart';
 
-// Constantes de Design
-const Color _backgroundColor = Color(0xFF161622); // Cor de fundo escura do app
+const Color _backgroundColor = Color(0xFF161622);
 const Color _primaryColor = Color(
   0xFFE50074,
-); // Cor de destaque (similar ao neon do header)
+); 
 
 final playlistTracksProvider = FutureProvider.family<List<Track>, String>((
   ref,
@@ -46,13 +44,11 @@ class PlaylistDetailPage extends ConsumerWidget {
         data: (tracks) {
           return CustomScrollView(
             slivers: [
-              // 1. SliverAppBar - Cabeçalho Imersivo
               SliverAppBar(
                 expandedHeight: 400, // Altura maior para o visual de destaque
                 pinned: true,
                 backgroundColor: _backgroundColor,
                 elevation: 0,
-                // Ícone de voltar e opções (três pontos)
                 leading: Container(
                   margin: const EdgeInsets.only(left: 10, top: 10),
                   child: ClipOval(
@@ -94,7 +90,6 @@ class PlaylistDetailPage extends ConsumerWidget {
                 flexibleSpace: FlexibleSpaceBar(
                   centerTitle: false,
                   titlePadding: EdgeInsets.zero,
-                  // O título aparece ao recolher a barra
                   title: Align(
                     alignment: Alignment.bottomLeft,
                     child: Padding(
@@ -112,7 +107,6 @@ class PlaylistDetailPage extends ConsumerWidget {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // Imagem de Fundo (Hero Animation)
                       Hero(
                         tag: 'playlist_${playlist.id}',
                         child: playlist.imageUrl != null
@@ -122,7 +116,6 @@ class PlaylistDetailPage extends ConsumerWidget {
                               )
                             : Container(color: Colors.grey[900]),
                       ),
-                      // Overlay de Gradiente
                       Positioned.fill(
                         child: DecoratedBox(
                           decoration: BoxDecoration(
@@ -130,7 +123,6 @@ class PlaylistDetailPage extends ConsumerWidget {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                // Transparente no topo, escuro no meio e muito escuro na base
                                 Colors.black.withOpacity(0.3),
                                 Colors.black.withOpacity(0.7),
                                 _backgroundColor.withOpacity(1.0),
@@ -139,7 +131,6 @@ class PlaylistDetailPage extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      // Conteúdo principal (Nome e descrição)
                       Positioned(
                         bottom: 0,
                         left: 0,
@@ -151,8 +142,7 @@ class PlaylistDetailPage extends ConsumerWidget {
                 ),
               ),
 
-              // 2. SliverToBoxAdapter - Título da Seção (Sugestão/Músicas)
-              SliverToBoxAdapter(
+]              SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
                   child: Text(
@@ -166,7 +156,6 @@ class PlaylistDetailPage extends ConsumerWidget {
                 ),
               ),
 
-              // 3. SliverList - Lista de Faixas Numeradas
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final track = tracks[index];
@@ -204,9 +193,7 @@ class PlaylistDetailPage extends ConsumerWidget {
   }
 }
 
-// --- WIDGETS AUXILIARES ---
 
-// Replicando o bloco de informações no header
 class _HeaderContent extends StatelessWidget {
   final Playlist playlist;
 
@@ -219,7 +206,6 @@ class _HeaderContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Título principal (Come to me / Nome da Playlist)
           Text(
             playlist.name,
             style: const TextStyle(
@@ -230,7 +216,6 @@ class _HeaderContent extends StatelessWidget {
           ),
           const SizedBox(height: 4),
 
-          // Subtítulo (Shawn Mendes / Criador da Playlist)
           Text(
             playlist.id ?? 'Usuário Spotify',
             style: TextStyle(
@@ -241,7 +226,6 @@ class _HeaderContent extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Descrição (Simulando o texto "Lorem ipsum...")
           Text(
             playlist.description.isNotEmpty
                 ? playlist.description
@@ -260,8 +244,7 @@ class _HeaderContent extends StatelessWidget {
   }
 }
 
-// Replicando o ListTile com numeração lateral
-// Replicando o ListTile com numeração lateral + imagem do álbum
+
 class _TrackListItem extends StatelessWidget {
   final Track track;
   final String trackNumber;
@@ -282,7 +265,6 @@ class _TrackListItem extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            /// Número lateral (01, 02, 03...)
             Text(
               trackNumber,
               style: const TextStyle(
@@ -293,7 +275,6 @@ class _TrackListItem extends StatelessWidget {
             ),
             const SizedBox(width: 16),
 
-            /// Imagem do álbum
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
@@ -305,7 +286,6 @@ class _TrackListItem extends StatelessWidget {
             ),
             const SizedBox(width: 16),
 
-            /// Conteúdo textual
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,7 +316,6 @@ class _TrackListItem extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            /// Três pontinhos
             const Icon(Icons.more_vert, color: Colors.white54, size: 20),
           ],
         ),

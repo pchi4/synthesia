@@ -1,4 +1,3 @@
-// lib/src/services/auth_service.dart
 
 import 'dart:async';
 import 'package:dio/dio.dart';
@@ -10,7 +9,6 @@ import '../core/app_config.dart';
 import '../core/helpers/pkce_helper.dart';
 import 'secure_storage_service.dart';
 
-// Provider
 final authServiceProvider = Provider((ref) => AuthService(ref));
 
 class AuthService {
@@ -20,11 +18,9 @@ class AuthService {
 
   AuthService(this._ref);
 
-  // URLs do Spotify
   static const String _authorizeUrl = AppConfig.spotifyAuthorizeUrl;
   static const String _tokenUrl = AppConfig.spotifyTokenUrl;
 
-  // Fluxo PKCE
   Future<void> login() async {
     final codeVerifier = PKCEHelper.generateCodeVerifier();
     final codeChallenge = PKCEHelper.generateCodeChallenge(codeVerifier);
@@ -40,7 +36,6 @@ class AuthService {
       'show_dialog': 'true',
     });
 
-    // Listener do deep link
     final completer = Completer<String>();
     StreamSubscription<Uri>? sub;
 
@@ -50,7 +45,7 @@ class AuthService {
         sub?.cancel();
     }
     });
-    // Abrir navegador
+
     try {
       final opened = await launchUrl(
         authUrl,
@@ -66,7 +61,6 @@ class AuthService {
       rethrow;
     }
 
-    // Esperar deep link
     final redirectUrl = await completer.future.timeout(
       const Duration(minutes: 1),
       onTimeout: () {
@@ -75,7 +69,6 @@ class AuthService {
       },
     );
 
-    // Extrai `code`
     final code = Uri.parse(redirectUrl).queryParameters['code'];
 
     if (code == null) {
@@ -85,7 +78,6 @@ class AuthService {
     await _exchangeCodeForToken(code, codeVerifier);
   }
 
-  // Troca código por tokens
   Future<void> _exchangeCodeForToken(
       String code, String codeVerifier) async {
     try {

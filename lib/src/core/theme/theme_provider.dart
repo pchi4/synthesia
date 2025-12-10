@@ -1,4 +1,3 @@
-// lib/src/core/theme_provider.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,7 +12,6 @@ class AppTheme {
 final themeProvider = Provider<AppTheme>((ref) {
   final hour = DateTime.now().hour;
 
-  // Day: 6 - 18 -> light accent, else dark
   final isDay = hour >= 6 && hour < 18;
   final primary = const Color(0xFF1DB954);
   final swatch = MaterialColor(primary.value, {

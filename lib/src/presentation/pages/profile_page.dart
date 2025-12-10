@@ -1,11 +1,9 @@
-// lib/src/presentation/pages/profile_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/usecases/get_user_profile_usecase.dart';
 
-// Este Provider simplificado gerencia o estado da requisição de perfil.
 final userProfileProvider = FutureProvider<User>((ref) async {
   final useCase = ref.watch(getUserProfileUseCaseProvider);
   return useCase.call();
@@ -16,17 +14,14 @@ class ProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Observa o estado do FutureProvider
     final userProfileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Meu Perfil Spotify')),
       body: Center(
         child: userProfileAsync.when(
-          // 1. Loading
           loading: () =>
               const CircularProgressIndicator(color: Color(0xFF1DB954)),
-          // 2. Erro
           error: (err, stack) {
             print(stack);
             return Padding(
@@ -38,19 +33,16 @@ class ProfilePage extends ConsumerWidget {
               ),
             );
           },
-          // 3. Dados (Sucesso)
           data: (user) => _buildProfileDetails(context, user),
         ),
       ),
     );
   }
 
-  // Widget de detalhes do perfil
   Widget _buildProfileDetails(BuildContext context, User user) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Imagem do Perfil (se houver)
         if (user.imageUrl != null)
           CircleAvatar(
             radius: 60,

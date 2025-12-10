@@ -26,14 +26,14 @@ class PlayerState {
   });
 
   factory PlayerState.initial() => const PlayerState(
-        isPlaying: false,
-        position: Duration.zero,
-        duration: Duration.zero,
-        currentTrack: null,
-        playlist: [],
-        currentIndex: 0,
-        deviceId: null,
-      );
+    isPlaying: false,
+    position: Duration.zero,
+    duration: Duration.zero,
+    currentTrack: null,
+    playlist: [],
+    currentIndex: 0,
+    deviceId: null,
+  );
 
   PlayerState copyWith({
     bool? isPlaying,
@@ -83,9 +83,13 @@ class PlayerNotifier extends Notifier<PlayerState> {
 
     final track = status.currentTrack != null
         ? Track(
+            id: status.currentTrack!.id,
             name: status.currentTrack!.name,
+            artistName: status.currentTrack!.artistName,
+            albumName: status.currentTrack!.albumName,
             uri: status.currentTrack!.uri,
             durationMs: status.currentTrack!.durationMs,
+            albumImageUrl: status.currentTrack!.albumImageUrl,
           )
         : null;
 
@@ -146,7 +150,7 @@ class PlayerNotifier extends Notifier<PlayerState> {
     if (state.deviceId == null) return;
 
     final caps = await _spotify.getPlayerCapabilities();
-    if (caps?.disallowsPausing == true) {
+    if ((caps?['disallows_pausing'] ?? false) == true) {
       print("Spotify não permite pausar no momento.");
       return;
     }

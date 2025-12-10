@@ -1,10 +1,9 @@
-// lib/src/presentation/pages/home_page.dart (NOVA IMPLEMENTAÇÃO DE UI-001)
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'profile_page.dart'; // Mantenha a ProfilePage
-import 'explore_page.dart'; // Crie este arquivo stub
-import 'library_page.dart'; // Crie este arquivo stub
+import 'profile_page.dart'; 
+import 'explore_page.dart'; 
+import 'library_page.dart'; 
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,9 +16,9 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
   static const List<Widget> _pages = <Widget>[
-    ExplorePage(), // Índice 0
-    LibraryPage(), // Índice 1
-    ProfilePage(), // Índice 2
+    ExplorePage(), 
+    LibraryPage(), 
+    ProfilePage(), 
   ];
 
   void _onItemTapped(int index) {
@@ -34,12 +33,8 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('AI Music Player'),
         centerTitle: false,
-        // Futuramente, botões de ação (ex: Logout)
       ),
-      // Exibe a página atualmente selecionada
       body: _pages.elementAt(_selectedIndex),
-
-      // Barra de Navegação Inferior (BottomNavigationBar)
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explorar'),

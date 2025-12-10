@@ -1,4 +1,3 @@
-// lib/src/presentation/pages/explore_page.dart
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -31,7 +30,6 @@ class LibraryPage extends ConsumerWidget {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // BACKGROUND GRADIENT + MESH
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
@@ -88,7 +86,6 @@ class LibraryPage extends ConsumerWidget {
 
               return CustomScrollView(
                 slivers: [
-                  // APPBAR PROFISSIONAL
                   SliverAppBar(
                     backgroundColor: Colors.black.withOpacity(0.1),
                     elevation: 0,
@@ -113,7 +110,6 @@ class LibraryPage extends ConsumerWidget {
                     ),
                   ),
 
-                  // GRID DE PLAYLISTS
                   SliverPadding(
                     padding: const EdgeInsets.all(18),
                     sliver: SliverGrid(

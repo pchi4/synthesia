@@ -1,4 +1,3 @@
-// lib/src/presentation/pages/player_page.dart
 
 import 'dart:ui';
 import 'dart:async';
@@ -7,9 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/usecases/player_usecase.dart';
 
-/// PlayerPage - tela completa estilizada conforme o mockup (card reto).
-/// - Usa `playerProvider` (Notifier) para controle de reprodução.
-/// - Caso `track.albumImageUrl` seja null, usa a imagem fallback local.
 class PlayerPage extends ConsumerStatefulWidget {
   final Track track;
 
@@ -25,10 +21,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   @override
   void initState() {
     super.initState();
-    // inicia atualização de posição simulada (mesma lógica sua)
     _startPositionUpdater();
 
-    // solicita play assim que entrar na tela (mantém compatibilidade com seu Notifier)
     Future.microtask(() {
       ref.read(playerProvider.notifier).playTrack(widget.track);
     });
@@ -43,7 +37,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
         if (next < player.duration) {
           ref.read(playerProvider.notifier).setPosition(next);
         } else {
-          // quando chega ao fim, zera (ou você pode avançar para próxima)
           ref.read(playerProvider.notifier).setPosition(Duration.zero);
         }
       }
@@ -77,7 +70,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // BACKDROP: imagem do álbum cobrindo tudo (blurred)
           Positioned.fill(
             child: Image.network(
               imageUrl,
@@ -86,7 +78,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
             ),
           ),
 
-          // filtro blur + overlay escuro
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 36, sigmaY: 36),
@@ -94,7 +85,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
             ),
           ),
 
-          // CONTEÚDO
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -102,10 +92,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Espaçamento superior
                     const SizedBox(height: 36),
 
-                    // CARD PRINCIPAL (reto, sem tilt)
                     Container(
                       width: cardWidth,
                       decoration: BoxDecoration(
@@ -123,7 +111,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // CAPA (ocupando a metade superior visual do card)
                           SizedBox(
                             height: 300,
                             child: Stack(
@@ -135,7 +122,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                                   errorBuilder: (_, __, ___) =>
                                       Container(color: Colors.grey[900]),
                                 ),
-                                // overlay gradient suave sobre a capa
                                 Container(
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
@@ -152,7 +138,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                             ),
                           ),
 
-                          // CONTEÚDO INFERIOR DO CARD
                           Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
@@ -161,7 +146,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                // TÍTULO (cor lilás similar ao mockup)
                                 Text(
                                   current.name,
                                   textAlign: TextAlign.center,
@@ -174,7 +158,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
                                 const SizedBox(height: 6),
 
-                                // ARTISTA + SUBTÍTULO menor
                                 Text(
                                   current.artistName,
                                   style: const TextStyle(
@@ -185,7 +168,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
                                 const SizedBox(height: 18),
 
-                                // SLIDER
                                 Column(
                                   children: [
                                     SliderTheme(
@@ -247,7 +229,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
                                 const SizedBox(height: 18),
 
-                                // CONTROLES: previous - play - next
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -304,7 +285,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
                                 const SizedBox(height: 16),
 
-                                // ACTIONS (favorite / share / shuffle) - estilo sutil
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -344,7 +324,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
             ),
           ),
 
-          // AppBar simples com botão de voltar sobreposto
           Positioned(
             top: 12,
             left: 8,
